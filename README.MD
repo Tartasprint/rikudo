@@ -12,3 +12,14 @@
 
 ## Projet
 `regles.py`: Les règles décrites dans le rendu de projet (`Theorie.pdf`).
+
+# Timings
+FNC pour:
+
+N=3: 0,08514s
+N=4: 0,08417s
+N=5: 0,15573s
+N=6: 0,15191s
+N=7: 3,28s
+N=8: 19,48s
+N=9: 98,94s

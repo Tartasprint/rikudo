@@ -20,7 +20,7 @@ class Expr:
         """
         if isinstance(droite, Top):
             return self
-        elif isinstance(droite,Bottom):
+        elif isinstance(droite, Bottom):
             return Bottom()
         else:
             return Et(self, droite)
@@ -32,7 +32,7 @@ class Expr:
         """
         if isinstance(droite, Top):
             return Top()
-        elif isinstance(droite,Bottom):
+        elif isinstance(droite, Bottom):
             return self
         else:
             return Ou(self, droite)
@@ -43,7 +43,7 @@ class Expr:
         """
         if isinstance(droite, Top):
             return self
-        elif isinstance(droite,Bottom):
+        elif isinstance(droite, Bottom):
             return Non(self)
         else:
             return Equiv(self, droite)
@@ -54,7 +54,7 @@ class Expr:
         """
         if isinstance(droite, Top):
             return Top()
-        elif isinstance(droite,Bottom):
+        elif isinstance(droite, Bottom):
             return Non(self)
         else:
             return Implique(self, droite)
@@ -139,7 +139,6 @@ class Et(Expr):
 
     def equiv_elim(self) -> ps.Expr:
         return self.gauche.equiv_elim().et(self.droite.equiv_elim())
-
 
 class Ou(Expr):
     def __init__(self, gauche: Expr, droite: Expr) -> None:

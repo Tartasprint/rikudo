@@ -18,10 +18,13 @@ class Expr:
 
     def nier(self) -> "Expr":
         pass
+
     def conjonc(self) -> "Expr":
         pass
+
     def conjonc_aux(self) -> "Expr":
         return self.conjonc(), False
+
 
 class Top(Expr):
     def __init__(self) -> None:
@@ -41,6 +44,7 @@ class Top(Expr):
 
     def nier(self) -> "Expr":
         return Bottom()
+
     def conjonc(self) -> "Expr":
         return self
 
@@ -60,6 +64,7 @@ class Bottom(Expr):
 
     def nier(self) -> "Expr":
         return Top()
+
     def conjonc(self) -> "Expr":
         return self
 
@@ -76,6 +81,7 @@ class Variable(Expr):
 
     def nier(self) -> "Expr":
         return Non(self)
+
     def conjonc(self) -> "Expr":
         return self
 
@@ -93,9 +99,10 @@ class Et(Expr):
 
     def nier(self) -> Expr:
         return self.gauche.nier().ou(self.droite.nier())
-    
+
     def conjonc(self) -> "Expr":
         return self.gauche.conjonc().et(self.droite.conjonc())
+
 
 class Ou(Expr):
     def __init__(self, gauche: Expr, droite: Expr) -> None:
@@ -110,6 +117,7 @@ class Ou(Expr):
 
     def nier(self) -> Expr:
         return self.gauche.nier().et(self.droite.nier())
+
     def conjonc(self) -> "Expr":
         if isinstance(self.gauche, Et):
             # (A et B) ou C ==> (A ou C) et (B ou C)
@@ -117,12 +125,13 @@ class Ou(Expr):
         elif isinstance(self.droite, Et):
             # A ou (B et C) ==> (A ou B) et (A ou C)
             return (self.gauche.ou(self.droite.droite)).et(self.gauche.ou(self.droite.gauche)).conjonc()
-        expr,change= self.conjonc_aux()
+        expr, change = self.conjonc_aux()
         while change:
-            expr,change=expr.conjonc_aux()
+            expr, change = expr.conjonc_aux()
         return expr
-        # (a ou b) ou c => 
-    def conjonc_aux(self) -> tuple[Expr,bool]:
+        # (a ou b) ou c =>
+
+    def conjonc_aux(self) -> tuple[Expr, bool]:
         if isinstance(self.gauche, Et):
             # (A et B) ou C ==> (A ou C) et (B ou C)
             return (self.gauche.droite.ou(self.droite)).et(self.gauche.gauche.ou(self.droite)).conjonc(), True
@@ -130,16 +139,16 @@ class Ou(Expr):
             # A ou (B et C) ==> (A ou B) et (A ou C)
             return (self.gauche.ou(self.droite.droite)).et(self.gauche.ou(self.droite.gauche)).conjonc(), True
         if isinstance(self.gauche, Ou):
-            expr,change = self.gauche.conjonc_aux()
+            expr, change = self.gauche.conjonc_aux()
             while change:
-                expr,change = expr.conjonc_aux()
+                expr, change = expr.conjonc_aux()
             gauche = expr
         else:
             gauche = self.gauche
         if isinstance(self.droite, Ou):
-            expr,change = self.droite.conjonc_aux()
+            expr, change = self.droite.conjonc_aux()
             while change:
-                expr,change = expr.conjonc_aux()
+                expr, change = expr.conjonc_aux()
             droite = expr
         else:
             droite = self.droite
@@ -149,7 +158,8 @@ class Ou(Expr):
         elif isinstance(droite, Et):
             # A ou (B et C) ==> (A ou B) et (A ou C)
             return (gauche.ou(droite.droite)).et(gauche.ou(droite.gauche)).conjonc(), True
-        return self.gauche.ou(self.droite),False
+        return self.gauche.ou(self.droite), False
+
 
 class Non(Expr):
     def __init__(self, expr: Expr) -> None:
@@ -166,6 +176,7 @@ class Non(Expr):
             return self.expr.nier().deplacer_negation()
         else:
             return self
+
     def conjonc(self) -> "Expr":
         return self
-# 
+#
