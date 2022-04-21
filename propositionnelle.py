@@ -15,27 +15,49 @@ class Expr:
 
     def et(self, droite: "Expr") -> "Expr":
         """
-        Créer l'expression Et(a,b) en écrivant a.et(b)
+        Créer l'expression Et(a,b) en écrivant a.et(b).
+        Si la valeur booléenne de a ou de b et connue, on optimise.
         """
-        return Et(self, droite)
+        if isinstance(droite, Top):
+            return self
+        elif isinstance(droite,Bottom):
+            return Bottom()
+        else:
+            return Et(self, droite)
 
     def ou(self, droite: "Expr") -> "Expr":
         """
-        Créer l'expression Ou(a,b) en écrivant a.ou(b)
+        Créer l'expression Ou(a,b) en écrivant a.ou(b).
+        Si la valeur booléenne de a ou de b et connue, on optimise.
         """
-        return Ou(self, droite)
+        if isinstance(droite, Top):
+            return Top()
+        elif isinstance(droite,Bottom):
+            return self
+        else:
+            return Ou(self, droite)
 
     def equiv(self, droite: "Expr") -> "Expr":
         """
         Créer l'expression Equiv(a,b) en écrivant a.equiv(b)
         """
-        return Equiv(self, droite)
+        if isinstance(droite, Top):
+            return self
+        elif isinstance(droite,Bottom):
+            return Non(self)
+        else:
+            return Equiv(self, droite)
 
     def implique(self, droite: "Expr") -> "Expr":
         """
         Créer l'expression Implique(a,b) en écrivant a.implique(b)
         """
-        return Implique(self, droite)
+        if isinstance(droite, Top):
+            return Top()
+        elif isinstance(droite,Bottom):
+            return Non(self)
+        else:
+            return Implique(self, droite)
 
     def equiv_elim(self) -> ps.Expr:
         """

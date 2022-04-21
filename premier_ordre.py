@@ -4,7 +4,7 @@ import propositionnelle
 
 class Index:
     """
-    Représente un indice qui varie dans les .
+    Représente un indice.
     """
     nom: str
     valeur: Union[None, int]
@@ -13,16 +13,31 @@ class Index:
         self.nom = nom
         self.valeur = None
 
-    def __add__(self, dec):
+    def __add__(self, dec: Union["Index",int]):
         return IndexAdd(self, dec)
+    def const(nom,c) -> "Index":
+        """
+        Définit un index constant. 
+        """
+        ci = Index(nom)
+        ci.valeur = c
+        return ci
+
 class IndexAdd(Index):
-    def __init__(self, autre: Index, dec: int) -> None:
-        self.nom = autre.nom
-        self.autre = autre
-        self.dec = dec
+    """
+    Permet de définir la somme de deux indices.
+    """
+    def __init__(self, gauche: Union[Index,int], droite: Union[Index,int]) -> None:
+        if isinstance(gauche,int):
+            gauche = Index.const(str(gauche), gauche)
+        if isinstance(droite,int):
+            droite = Index.const(str(droite), droite)
+        self.nom = gauche.nom + "+" + droite.nom
+        self.gauche = gauche
+        self.droite = droite
     @property
     def valeur(self):
-        return self.autre.valeur + self.dec
+        return self.gauche.valeur + self.droite.valeur
 
 class Expr:
     """
@@ -49,33 +64,49 @@ class Expr:
         pass
 
 class VariableIndexable(Expr):
-    def __init__(self, nom, nb_indices: int):
+    """
+    Une variable indexable a un nom, le nombre d'indices qui peuvent l'indexer, et vals est
+    un dictionnaire qui a un tuple d'indices associe la valeur si elle est connue de la variable.
+    """
+    def __init__(self, nom, nb_indices: int, vals: dict[any, Optional[bool]]):
         self.nom = nom
         self.nb_indices = nb_indices
-    def i(self,indices: list[Index]) -> "VariableIndexee":
+        self.vals = vals
+    def _(self,*indices: list[Index]) -> "VariableIndexee":
+        """
+        Permet de dire avec quels indices est associée la variable.
+        """
         assert(len(indices) == self.nb_indices)
-        return VariableIndexee(self.nom, indices)
+        return VariableIndexee(self.nom, indices,self.vals)
 
 class VariableIndexee(Expr):
-    def __init__(self, nom, indices: list[Index]):
+    def __init__(self, nom, indices: list[Index],vals):
         """
         Une variable indexée par les indices. Exemple a les coefficient d'une matrice
         est indexée par i et j.
         """
         self.nom = nom
         self.indices = indices
+        self.vals = vals
 
     def build(self) -> propositionnelle.Expr:
-        # On transforme la variable x indicée par (i=1,j=2) en x_1_2
-        r = self.nom
-        for index in self.indices:
-            i = index.valeur
-            if i is None:
-                print("Error in var index")  # TODO: Improve error message
-                raise {}
+        # On vérifie que tous les indiçages sont bien définis
+        if any(map(lambda index: index.valeur is None, self.indices)):
+            print("Error in var index")  # TODO: Improve error message
+            raise {}
+        val = self.vals[tuple(map(lambda index: index.valeur, self.indices))]
+        if val is not None:
+            if val:
+                return propositionnelle.Top()
             else:
+                return propositionnelle.Bottom()
+        else:
+            # On transforme la variable x indicée par (i=1,j=2) en x_1_2
+            r = self.nom
+            for index in self.indices:
+                i = index.valeur
                 r += "_" + str(i)
-        return propositionnelle.Variable(r)
+            return propositionnelle.Variable(r)
 
 
 class Pourtout(Expr):
@@ -89,13 +120,18 @@ class Pourtout(Expr):
         self.expr = expr  # L'expression contenue
         self.index = index  # L'indice lié par le pour tout. Dans l'exemple au-dessus c'est x
         self.dom = dom  # Le domaine que va parcourir l'indice.
-        #                C'est une fonction qui reçoit la liste du contexte et qui retourne un itérateur sur le domaine à parcourir.
+        #                 C'est une fonction à partir de la liste du contexte retourne un itérateur sur le domaine à parcourir.
 
     def build(self) -> propositionnelle.Expr:
         expr: propositionnelle.Expr = propositionnelle.Top()
         for i in self.dom(self.ctxt):
             self.index.valeur = i
-            expr = expr.et(self.expr.build())
+            e2 = self.expr.build()
+            if isinstance(e2, propositionnelle.Bottom):
+                return propositionnelle.Bottom()
+            elif isinstance(e2, propositionnelle.Top):
+                continue
+            expr = expr.et(e2)
         return expr
 
 
@@ -115,7 +151,12 @@ class Ilexiste(Expr):
         expr: propositionnelle.Expr = propositionnelle.Bottom()
         for i in self.dom(self.ctxt):
             self.index.valeur = i
-            expr = expr.ou(self.expr.build())
+            e2 = self.expr.build()
+            if isinstance(e2, propositionnelle.Bottom):
+                continue
+            elif isinstance(e2, propositionnelle.Top):
+                return propositionnelle.Top()
+            expr = expr.ou(e2)
         return expr
 
 
