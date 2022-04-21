@@ -3,6 +3,9 @@ import propositionnelle
 
 
 class Index:
+    """
+    Représente un indice qui varie dans les .
+    """
     nom: str
     valeur: Union[None, int]
 
@@ -12,7 +15,14 @@ class Index:
 
 
 class Expr:
+    """
+    Une expression du premier ordre (sans fonctions, uniquement des relations).
+    """
+
     def build(self) -> propositionnelle.Expr:
+        """
+        Transforme l'expression du premier ordre en formule propositionnelle.
+        """
         pass
 
     def et(self, droite: "Expr") -> "Expr":
@@ -27,10 +37,15 @@ class Expr:
 
 class VariableIndexee(Expr):
     def __init__(self, nom, indices: list[Index]):
+        """
+        Une variable indexée par les indices. Exemple a les coefficient d'une matrice
+        est indexée par i et j.
+        """
         self.nom = nom
         self.indices = indices
 
     def build(self) -> propositionnelle.Expr:
+        # On transforme la variable x indicée par (i=1,j=2) en x_1_2
         r = self.nom
         for index in self.indices:
             i = index.valeur
@@ -48,10 +63,12 @@ class Pourtout(Expr):
                  index: Index,
                  dom: Callable[[Iterable[Index]], Iterable[int]],
                  expr: Expr) -> None:
+        #  Le contexte de l'expression si (pourtout x, E) se trouve dans pourtout y (pourtout x E), le contexte est [y].
         self.ctxt = ctxt
-        self.expr = expr
-        self.index = index
-        self.dom = dom
+        self.expr = expr  # L'expression contenue
+        self.index = index  # L'indice lié par le pour tout. Dans l'exemple au-dessus c'est x
+        self.dom = dom  # Le domaine que va parcourir l'indice.
+        #                C'est une fonction qui reçoit la liste du contexte et qui retourne un itérateur sur le domaine à parcourir.
 
     def build(self) -> propositionnelle.Expr:
         expr: propositionnelle.Expr = propositionnelle.Top()
@@ -67,6 +84,7 @@ class Ilexiste(Expr):
                  index: Index,
                  dom: Callable[[Iterable[Index]], Iterable[int]],
                  expr: Expr) -> None:
+        # Voir Pourtout pour les explications
         self.ctxt = ctxt
         self.expr = expr
         self.index = index
