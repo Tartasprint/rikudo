@@ -13,6 +13,16 @@ class Index:
         self.nom = nom
         self.valeur = None
 
+    def __add__(self, dec):
+        return IndexAdd(self, dec)
+class IndexAdd(Index):
+    def __init__(self, autre: Index, dec: int) -> None:
+        self.nom = autre.nom
+        self.autre = autre
+        self.dec = dec
+    @property
+    def valeur(self):
+        return self.autre.valeur + self.dec
 
 class Expr:
     """
@@ -31,9 +41,20 @@ class Expr:
     def ou(self, droite: "Expr") -> "Expr":
         return Ou(self, droite)
 
+    def implique(self, droite: "Expr") -> "Expr":
+        return Implique(self,droite)
+    def equiv(self, droite: "Expr") -> "Expr":
+        return Equiv(self,droite)
     def fnc(self):
         pass
 
+class VariableIndexable(Expr):
+    def __init__(self, nom, nb_indices: int):
+        self.nom = nom
+        self.nb_indices = nb_indices
+    def i(self,indices: list[Index]) -> "VariableIndexee":
+        assert(len(indices) == self.nb_indices)
+        return VariableIndexee(self.nom, indices)
 
 class VariableIndexee(Expr):
     def __init__(self, nom, indices: list[Index]):

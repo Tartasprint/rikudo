@@ -1,5 +1,7 @@
 from inspect import isclass
 
+from six import b
+
 
 class Expr:
     def repr(self) -> str:
@@ -16,7 +18,10 @@ class Expr:
 
     def nier(self) -> "Expr":
         pass
-
+    def conjonc(self) -> "Expr":
+        pass
+    def conjonc_aux(self) -> "Expr":
+        return self.conjonc(), False
 
 class Top(Expr):
     def __init__(self) -> None:
@@ -36,6 +41,8 @@ class Top(Expr):
 
     def nier(self) -> "Expr":
         return Bottom()
+    def conjonc(self) -> "Expr":
+        return self
 
 
 class Bottom(Expr):
@@ -53,6 +60,8 @@ class Bottom(Expr):
 
     def nier(self) -> "Expr":
         return Top()
+    def conjonc(self) -> "Expr":
+        return self
 
 
 class Variable(Expr):
@@ -67,6 +76,8 @@ class Variable(Expr):
 
     def nier(self) -> "Expr":
         return Non(self)
+    def conjonc(self) -> "Expr":
+        return self
 
 
 class Et(Expr):
@@ -82,7 +93,9 @@ class Et(Expr):
 
     def nier(self) -> Expr:
         return self.gauche.nier().ou(self.droite.nier())
-
+    
+    def conjonc(self) -> "Expr":
+        return self.gauche.conjonc().et(self.droite.conjonc())
 
 class Ou(Expr):
     def __init__(self, gauche: Expr, droite: Expr) -> None:
@@ -97,7 +110,46 @@ class Ou(Expr):
 
     def nier(self) -> Expr:
         return self.gauche.nier().et(self.droite.nier())
-
+    def conjonc(self) -> "Expr":
+        if isinstance(self.gauche, Et):
+            # (A et B) ou C ==> (A ou C) et (B ou C)
+            return (self.gauche.droite.ou(self.droite)).et(self.gauche.gauche.ou(self.droite)).conjonc()
+        elif isinstance(self.droite, Et):
+            # A ou (B et C) ==> (A ou B) et (A ou C)
+            return (self.gauche.ou(self.droite.droite)).et(self.gauche.ou(self.droite.gauche)).conjonc()
+        expr,change= self.conjonc_aux()
+        while change:
+            expr,change=expr.conjonc_aux()
+        return expr
+        # (a ou b) ou c => 
+    def conjonc_aux(self) -> tuple[Expr,bool]:
+        if isinstance(self.gauche, Et):
+            # (A et B) ou C ==> (A ou C) et (B ou C)
+            return (self.gauche.droite.ou(self.droite)).et(self.gauche.gauche.ou(self.droite)).conjonc(), True
+        elif isinstance(self.droite, Et):
+            # A ou (B et C) ==> (A ou B) et (A ou C)
+            return (self.gauche.ou(self.droite.droite)).et(self.gauche.ou(self.droite.gauche)).conjonc(), True
+        if isinstance(self.gauche, Ou):
+            expr,change = self.gauche.conjonc_aux()
+            while change:
+                expr,change = expr.conjonc_aux()
+            gauche = expr
+        else:
+            gauche = self.gauche
+        if isinstance(self.droite, Ou):
+            expr,change = self.droite.conjonc_aux()
+            while change:
+                expr,change = expr.conjonc_aux()
+            droite = expr
+        else:
+            droite = self.droite
+        if isinstance(gauche, Et):
+            # (A et B) ou C ==> (A ou C) et (B ou C)
+            return (gauche.droite.ou(droite)).et(gauche.gauche.ou(droite)).conjonc(), True
+        elif isinstance(droite, Et):
+            # A ou (B et C) ==> (A ou B) et (A ou C)
+            return (gauche.ou(droite.droite)).et(gauche.ou(droite.gauche)).conjonc(), True
+        return self.gauche.ou(self.droite),False
 
 class Non(Expr):
     def __init__(self, expr: Expr) -> None:
@@ -107,10 +159,13 @@ class Non(Expr):
         return "non(" + self.expr.repr()+")"
 
     def nier(self) -> Expr:
-        return self.expr.nier()
+        return self.expr
 
     def deplacer_negation(self) -> "Expr":
         if not isinstance(self.expr, Variable):  # On évite une boucle infinie
             return self.expr.nier().deplacer_negation()
         else:
             return self
+    def conjonc(self) -> "Expr":
+        return self
+# 
