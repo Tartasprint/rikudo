@@ -5,12 +5,26 @@ class Expr:
         pass
 
     def deplacer_negation(self) -> "Expr":
+        """
+        Déplace les négations.
+
+        L'implémentation de cette fonction ne fait que propager dans l'arbre de
+        l'expression la nécessité de deplacer les négations, le travail est réellement
+        fait lorsqu'on rencontre un Non par la méthode nier.
+        """
         pass
 
     def nier(self) -> "Expr":
+        """
+        Fonction appellée lors du déplacement des négations: si on a Non(expr) on
+        rapproche le Non des littéraux.
+        """
         pass
 
     def conjonc(self) -> fnc.Clause:
+        """
+        Transformation en forme normale conjonctive.
+        """
         pass
 
 
@@ -68,6 +82,11 @@ class Variable(Expr):
         return fnc.Clause([fnc.Terme([fnc.Litteral(self.nom,fnc.POSITIF)])])
 
 class Produit(Expr):
+    """
+    Un Produit est la généralisation du Et qui est binaire à un nombre
+    de termes quelconques. Permet d'exprimer moins lourdement les Pourtout
+    et d'avoir une structure plus légère.
+    """
     def __init__(self, termes: list[Expr]) -> None:
         self.termes = termes
     def repr(self) -> str:
@@ -86,6 +105,11 @@ class Produit(Expr):
 
 
 class Somme(Expr):
+    """
+    Une Somme est la généralisation du Ou qui est binaire à un nombre
+    de termes quelconques. Permet d'exprimer moins lourdement les Ilexiste
+    et d'avoir une structure plus légère.
+    """
     def __init__(self, termes: list[Expr]) -> None:
         self.termes = termes
     def repr(self) -> str:
@@ -99,7 +123,9 @@ class Somme(Expr):
     def conjonc(self) -> fnc.Clause:
         l=fnc.Bottom() # Clause[Terme[]]
         for t in self.termes:
+            # On transforme le terme en A une FNC
             tc =t.conjonc()
+            # On distribue chacun des termes de A sur chaque terme de l
             for t_terme in tc.termes:
                 for l_terme in l.termes:
                     l_terme.extend(t_terme)
@@ -116,11 +142,15 @@ class Non(Expr):
         return self.expr
 
     def deplacer_negation(self) -> Expr:
-        if not isinstance(self.expr, Variable):  # On évite une boucle infinie
-            return self.expr.nier().deplacer_negation()
-        else:
+        if isinstance(self.expr, Variable):  # On a rien a faire, la négation est déjà sur un littéral
             return self
+        else:
+            return self.expr.nier().deplacer_negation()
 
     def conjonc(self) -> fnc.Clause:
         assert(isinstance(self.expr, Variable))
-        return fnc.Clause([fnc.Terme([fnc.Litteral(self.expr.nom,fnc.NEGATIF)])])
+        return fnc.Clause([
+            fnc.Terme([
+                fnc.Litteral(self.expr.nom,fnc.NEGATIF)
+                ])
+            ])

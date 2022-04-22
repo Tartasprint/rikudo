@@ -12,11 +12,15 @@ class Dimacs:
         clauses Le système que l'on veut résoudre
         input   L'entrée DIMACS donnée au SAT Solveur
         output  La sortie DIMACS du SAT Solveur
+        solution La solution du SAT Solveur. False si insatisfaisable, sinon une table de
+                    correspondance entre nom de variable et valeur obtenue par le SAT-Solveur.
     """
 
     itov: list[str]
     vtoi: dict[str,int]
     solution: Union[Literal[False],dict[str,bool]]
+    input: str
+    output: str
 
     def __init__(self, clauses: fnc.Clause) -> None:
         self.clauses = clauses

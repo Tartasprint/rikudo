@@ -8,7 +8,7 @@ class Expr:
 
     def repr(self) -> str:
         """
-        Permet de passer d'un object expression à du texte
+        Permet de passer d'une expression à une représentation textuelle.
         """
         pass
 

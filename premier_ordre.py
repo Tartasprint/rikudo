@@ -150,21 +150,20 @@ class RelationIndexee(Expr):
 
 
 class Pourtout(Expr):
+    """
+    Le quantificateur pourtout.
+    """
     def __init__(self,
-                 ctxt: list[Index],
                  index: Index,
-                 dom: Callable[[Iterable[Index]], Iterable[int]],
+                 dom: Iterable[int],
                  expr: Expr) -> None:
-        #  Le contexte de l'expression si (pourtout x, E) se trouve dans pourtout y (pourtout x E), le contexte est [y].
-        self.ctxt = ctxt
         self.expr = expr  # L'expression contenue
         self.index = index  # L'indice lié par le pour tout. Dans l'exemple au-dessus c'est x
         self.dom = dom  # Le domaine que va parcourir l'indice.
-        #                 C'est une fonction à partir de la liste du contexte retourne un itérateur sur le domaine à parcourir.
 
     def build(self) -> propositionnelle.Expr:
         expr = propositionnelle.Produit([])
-        for i in self.dom(self.ctxt):
+        for i in self.dom:
             self.index.valeur = i
             e2 = self.expr.build()
             if isinstance(e2, propositionnelle.Bottom):
@@ -176,20 +175,21 @@ class Pourtout(Expr):
 
 
 class Ilexiste(Expr):
+    """
+    Le quantificateur il existe.
+    """
     def __init__(self,
-                 ctxt: list[Index],
                  index: Index,
-                 dom: Callable[[Iterable[Index]], Iterable[int]],
+                 dom: Iterable[int],
                  expr: Expr) -> None:
         # Voir Pourtout pour les explications
-        self.ctxt = ctxt
         self.expr = expr
         self.index = index
         self.dom = dom
 
     def build(self) -> propositionnelle.Expr:
         expr= propositionnelle.Somme([])
-        for i in self.dom(self.ctxt):
+        for i in self.dom:
             self.index.valeur = i
             e2 = self.expr.build()
             if isinstance(e2, propositionnelle.Bottom):
