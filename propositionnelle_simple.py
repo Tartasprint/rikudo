@@ -1,17 +1,8 @@
-from inspect import isclass
-
-from six import b
-
+import fnc
 
 class Expr:
     def repr(self) -> str:
         pass
-
-    def et(self, droite: "Expr") -> "Expr":
-        return Et(self, droite)
-
-    def ou(self, droite: "Expr") -> "Expr":
-        return Ou(self, droite)
 
     def deplacer_negation(self) -> "Expr":
         pass
@@ -19,11 +10,8 @@ class Expr:
     def nier(self) -> "Expr":
         pass
 
-    def conjonc(self) -> "Expr":
+    def conjonc(self) -> fnc.Clause:
         pass
-
-    def conjonc_aux(self) -> "Expr":
-        return self.conjonc(), False
 
 
 class Top(Expr):
@@ -33,20 +21,14 @@ class Top(Expr):
     def repr(self) -> str:
         return "TOP"
 
-    def et(self, droite: Expr) -> Expr:
-        return droite
-
-    def ou(self, droite: Expr) -> Expr:
-        return Top()
-
     def deplacer_negation(self) -> "Expr":
         return self
 
     def nier(self) -> "Expr":
         return Bottom()
 
-    def conjonc(self) -> "Expr":
-        return self
+    def conjonc(self) -> fnc.Clause:
+        return fnc.Top()
 
 
 class Bottom(Expr):
@@ -65,8 +47,8 @@ class Bottom(Expr):
     def nier(self) -> "Expr":
         return Top()
 
-    def conjonc(self) -> "Expr":
-        return self
+    def conjonc(self) -> fnc.Clause:
+        return fnc.Bottom()
 
 
 class Variable(Expr):
@@ -82,84 +64,46 @@ class Variable(Expr):
     def nier(self) -> "Expr":
         return Non(self)
 
-    def conjonc(self) -> "Expr":
-        return self
+    def conjonc(self) -> fnc.Clause:
+        return fnc.Clause([fnc.Terme([fnc.Litteral(self.nom,fnc.POSITIF)])])
 
-
-class Et(Expr):
-    def __init__(self, gauche: Expr, droite: Expr) -> None:
-        self.gauche = gauche
-        self.droite = droite
-
+class Produit(Expr):
+    def __init__(self, termes: list[Expr]) -> None:
+        self.termes = termes
     def repr(self) -> str:
-        return "("+self.gauche.repr() + " et " + self.droite.repr()+")"
-
+        return "Et(" + ",".join(t.repr() for t in self.termes) + ")"
     def deplacer_negation(self) -> "Expr":
-        return self.gauche.deplacer_negation().et(self.droite.deplacer_negation())
+        return Produit([t.deplacer_negation() for t in self.termes])
 
     def nier(self) -> Expr:
-        return self.gauche.nier().ou(self.droite.nier())
+        return Somme([t.nier() for t in self.termes])
 
-    def conjonc(self) -> "Expr":
-        return self.gauche.conjonc().et(self.droite.conjonc())
+    def conjonc(self) -> fnc.Clause:
+        l=fnc.Top()
+        for t in self.termes:
+            l.extend(t.conjonc())
+        return l
 
 
-class Ou(Expr):
-    def __init__(self, gauche: Expr, droite: Expr) -> None:
-        self.gauche = gauche
-        self.droite = droite
-
+class Somme(Expr):
+    def __init__(self, termes: list[Expr]) -> None:
+        self.termes = termes
     def repr(self) -> str:
-        return "("+self.gauche.repr() + " ou " + self.droite.repr()+")"
-
+        return "Ou(" + ",".join(t.repr() for t in self.termes) + ")"
     def deplacer_negation(self) -> "Expr":
-        return self.gauche.deplacer_negation().ou(self.droite.deplacer_negation())
+        return Somme([t.deplacer_negation() for t in self.termes])
 
     def nier(self) -> Expr:
-        return self.gauche.nier().et(self.droite.nier())
+        return Produit([t.nier() for t in self.termes])
 
-    def conjonc(self) -> "Expr":
-        if isinstance(self.gauche, Et):
-            # (A et B) ou C ==> (A ou C) et (B ou C)
-            return (self.gauche.droite.ou(self.droite)).et(self.gauche.gauche.ou(self.droite)).conjonc()
-        elif isinstance(self.droite, Et):
-            # A ou (B et C) ==> (A ou B) et (A ou C)
-            return (self.gauche.ou(self.droite.droite)).et(self.gauche.ou(self.droite.gauche)).conjonc()
-        expr, change = self.conjonc_aux()
-        while change:
-            expr, change = expr.conjonc_aux()
-        return expr
-        # (a ou b) ou c =>
-
-    def conjonc_aux(self) -> tuple[Expr, bool]:
-        if isinstance(self.gauche, Et):
-            # (A et B) ou C ==> (A ou C) et (B ou C)
-            return (self.gauche.droite.ou(self.droite)).et(self.gauche.gauche.ou(self.droite)).conjonc(), True
-        elif isinstance(self.droite, Et):
-            # A ou (B et C) ==> (A ou B) et (A ou C)
-            return (self.gauche.ou(self.droite.droite)).et(self.gauche.ou(self.droite.gauche)).conjonc(), True
-        if isinstance(self.gauche, Ou):
-            expr, change = self.gauche.conjonc_aux()
-            while change:
-                expr, change = expr.conjonc_aux()
-            gauche = expr
-        else:
-            gauche = self.gauche
-        if isinstance(self.droite, Ou):
-            expr, change = self.droite.conjonc_aux()
-            while change:
-                expr, change = expr.conjonc_aux()
-            droite = expr
-        else:
-            droite = self.droite
-        if isinstance(gauche, Et):
-            # (A et B) ou C ==> (A ou C) et (B ou C)
-            return (gauche.droite.ou(droite)).et(gauche.gauche.ou(droite)).conjonc(), True
-        elif isinstance(droite, Et):
-            # A ou (B et C) ==> (A ou B) et (A ou C)
-            return (gauche.ou(droite.droite)).et(gauche.ou(droite.gauche)).conjonc(), True
-        return self.gauche.ou(self.droite), False
-
+    def conjonc(self) -> fnc.Clause:
+        l=fnc.Bottom()
+        for t in self.termes:
+            tc =t.conjonc()
+            for t_terme in tc.termes:
+                for l_terme in l.termes:
+                    l_terme.extend(t_terme)
+        return l
 
 class Non(Expr):
     def __init__(self, expr: Expr) -> None:
@@ -171,12 +115,12 @@ class Non(Expr):
     def nier(self) -> Expr:
         return self.expr
 
-    def deplacer_negation(self) -> "Expr":
+    def deplacer_negation(self) -> Expr:
         if not isinstance(self.expr, Variable):  # On évite une boucle infinie
             return self.expr.nier().deplacer_negation()
         else:
             return self
 
-    def conjonc(self) -> "Expr":
-        return self
-#
+    def conjonc(self) -> fnc.Clause:
+        assert(isinstance(self.expr, Variable))
+        return fnc.Clause([fnc.Terme([fnc.Litteral(self.expr.nom,fnc.NEGATIF)])])

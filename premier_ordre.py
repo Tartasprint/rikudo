@@ -2,7 +2,7 @@ from typing import Any, Callable, Iterable, Optional, Union
 import propositionnelle
 
 
-class Index:
+class Index():
     """
     Représente un indice.
     """
@@ -17,11 +17,12 @@ class Index:
         return IndexAdd(self, dec)
 
     def __ne__(self, autre: Union["Index", int]) -> "Expr":
-        if type(autre) is int:
+        if isinstance(autre,int):
             autre = Index.const(str(autre), autre)
         return RelationIndexee(self.nom+'!='+autre.nom, [self, autre], lambda indices: indices[0] != indices[1])
 
-    def const(nom, c) -> "Index":
+    @staticmethod
+    def const(nom: str, c: int) -> "Index":
         """
         Définit un index constant. 
         """
@@ -82,17 +83,17 @@ class VariableIndexable:
     un dictionnaire qui a un tuple d'indices associe la valeur si elle est connue de la variable.
     """
 
-    def __init__(self, nom, nb_indices: int, vals: dict[any, Optional[bool]]):
+    def __init__(self, nom, nb_indices: int, vals: dict[Any, Optional[bool]]):
         self.nom = nom
         self.nb_indices = nb_indices
         self.vals = vals
 
-    def _(self, *indices: list[Index]) -> "VariableIndexee":
+    def _(self, *indices: Index) -> "VariableIndexee":
         """
         Permet de dire avec quels indices est associée la variable.
         """
         assert(len(indices) == self.nb_indices)
-        return VariableIndexee(self.nom, indices, self.vals)
+        return VariableIndexee(self.nom, list(indices), self.vals)
 
 
 class VariableIndexee(Expr):
@@ -126,7 +127,7 @@ class VariableIndexee(Expr):
 
 
 class RelationIndexee(Expr):
-    def __init__(self, nom, indices: list[Index], relation):
+    def __init__(self, nom: str, indices: list[Index], relation: Callable[[Any],bool]):
         """
         Une variable indexée par les indices. Exemple a les coefficient d'une matrice
         est indexée par i et j.
@@ -162,7 +163,7 @@ class Pourtout(Expr):
         #                 C'est une fonction à partir de la liste du contexte retourne un itérateur sur le domaine à parcourir.
 
     def build(self) -> propositionnelle.Expr:
-        expr: propositionnelle.Expr = propositionnelle.Top()
+        expr = propositionnelle.Produit([])
         for i in self.dom(self.ctxt):
             self.index.valeur = i
             e2 = self.expr.build()
@@ -170,8 +171,8 @@ class Pourtout(Expr):
                 return propositionnelle.Bottom()
             elif isinstance(e2, propositionnelle.Top):
                 continue
-            expr = expr.et(e2)
-        return expr
+            expr.termes.append(e2)
+        return  expr if len(expr.termes) > 0 else propositionnelle.Top()
 
 
 class Ilexiste(Expr):
@@ -187,7 +188,7 @@ class Ilexiste(Expr):
         self.dom = dom
 
     def build(self) -> propositionnelle.Expr:
-        expr: propositionnelle.Expr = propositionnelle.Bottom()
+        expr= propositionnelle.Somme([])
         for i in self.dom(self.ctxt):
             self.index.valeur = i
             e2 = self.expr.build()
@@ -195,8 +196,8 @@ class Ilexiste(Expr):
                 continue
             elif isinstance(e2, propositionnelle.Top):
                 return propositionnelle.Top()
-            expr = expr.ou(e2)
-        return expr
+            expr.termes.append(e2)
+        return expr if len(expr.termes) > 0 else propositionnelle.Bottom()
 
 
 class Et(Expr):

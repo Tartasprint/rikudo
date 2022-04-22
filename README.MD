@@ -4,14 +4,24 @@
 
 `test.py`: fichier pour tester les modules de logique.
 ## Logique
-`premier_ordre.py`: Fonctions pour exprimer une formule du premier ordre et passer au propositionnel
+Fichiers pour écrire de la logique de façon assez générale:
 
-`propositionnelle.py`: Fonctions  pour exprimer une formule propositionnelle (avec <=> et =>)
+* `premier_ordre.py`: Fonctions pour exprimer une formule du premier ordre et passer au propositionnel
 
-`propositionnelle_simple.py`: Fonctions pour exprimer une formule propositionnelle (sans <=> et =>) et passer en forme normale
+* `propositionnelle.py`: Fonctions  pour exprimer une formule propositionnelle (avec <=> et =>)
+
+* `propositionnelle_simple.py`: Fonctions pour exprimer une formule propositionnelle (sans <=> et =>) et passer en forme normale
+
+* `fnc.py`: La forme normale conjonctive
+
+* `dimacs.py`: Gère la communication avec un SAT solveur en communiquant avec des fichiers DIMACS.
 
 ## Projet
-`regles.py`: Les règles décrites dans le rendu de projet (`Theorie.pdf`).
+Fichiers qui concernent le projet:
+
+* `regles.py`: Les règles décrites dans le rendu de projet (`Theorie.pdf`).
+
+
 
 # Timings
 FNC pour:

@@ -25,7 +25,7 @@ def forme_normale():
     c = pr.Variable("c")
     d = pr.Variable("d")
     form = pr.Non(((a.implique(b)).et(c)).ou(a.et(d)))
-    print(form.equiv_elim().repr())
+    print(form.simplif().repr())
     print(form.forme_normale().repr())
 
 

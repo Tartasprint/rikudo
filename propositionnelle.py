@@ -1,4 +1,3 @@
-from inspect import isclass
 import propositionnelle_simple as ps
 
 
@@ -59,11 +58,11 @@ class Expr:
         else:
             return Implique(self, droite)
 
-    def equiv_elim(self) -> ps.Expr:
+    def simplif(self) -> ps.Expr:
         """
         Remplacer les équivalences et les implications dans l'expression par
-        "(nonA ou B) et (A ou nonB)" et "nonA ou B" respectivement. L'expression
-        devient alors une expression simple.
+        "(nonA ou B) et (A ou nonB)" et "nonA ou B" respectivement, enfin les et/ou binaires sont
+        transformés en produits/sommes .L'expression devient alors une expression simple.
         """
         pass
 
@@ -72,7 +71,7 @@ class Expr:
         Transforme la formule en forme normale, c'est à dire avec seulement
         des et, des ou et les négations uniquement sur des variables.
         """
-        return self.equiv_elim().deplacer_negation()
+        return self.simplif().deplacer_negation()
 
 
 class Top(Expr):
@@ -94,7 +93,7 @@ class Top(Expr):
     def implique(self, droite: Expr) -> Expr:
         return droite
 
-    def equiv_elim(self) -> ps.Expr:
+    def simplif(self) -> ps.Expr:
         return ps.Top()
 
 
@@ -114,7 +113,7 @@ class Bottom(Expr):
     def implique(self, droite: Expr) -> Expr:
         return Top()
 
-    def equiv_elim(self) -> ps.Expr:
+    def simplif(self) -> ps.Expr:
         return ps.Bottom()
 
 
@@ -125,7 +124,7 @@ class Variable(Expr):
     def repr(self) -> str:
         return self.nom
 
-    def equiv_elim(self) -> ps.Expr:
+    def simplif(self) -> ps.Expr:
         return ps.Variable(self.nom)
 
 
@@ -137,8 +136,59 @@ class Et(Expr):
     def repr(self) -> str:
         return "("+self.gauche.repr() + " et " + self.droite.repr()+")"
 
-    def equiv_elim(self) -> ps.Expr:
-        return self.gauche.equiv_elim().et(self.droite.equiv_elim())
+    def simplif(self) -> ps.Expr:
+        r = ps.Produit([])
+        gauche = self.gauche.simplif()
+        droite = self.droite.simplif()
+        if isinstance(gauche, ps.Produit):
+            r.termes.extend(gauche.termes)
+        elif isinstance(gauche,ps.Top):
+            return droite
+        elif isinstance(gauche,ps.Bottom):
+            return ps.Bottom()
+        else:
+            r.termes.append(gauche)
+        if isinstance(droite,ps.Produit):
+            r.termes.extend(droite.termes)
+        elif isinstance(droite,ps.Top):
+            return gauche
+        elif isinstance(gauche,ps.Bottom):
+            return ps.Bottom()
+        else:
+            r.termes.append(droite)
+        if len(r.termes) > 1:
+            return r
+        elif len(r.termes) == 1:
+            return r.termes[0]
+        else:
+            return ps.Top()
+
+
+class Produit(Expr):
+    def __init__(self, termes: list[Expr]) -> None:
+        self.termes = termes
+
+    def repr(self) -> str:
+        return "ET(" + ",".join(t.repr() for t in self.termes) + ")"
+
+    def simplif(self) -> ps.Expr:
+        r=ps.Produit([])
+        for t in self.termes:
+            ts=t.simplif()
+            if isinstance(ts,ps.Produit):
+                r.termes.extend(ts.termes)
+            elif isinstance(ts,ps.Top):
+                continue
+            elif isinstance(ts,ps.Bottom):
+                return ps.Bottom()
+            else:
+                r.termes.append(ts)
+        if len(r.termes) > 1:
+            return r
+        elif len(r.termes) == 1:
+            return r.termes[0]
+        else:
+            return ps.Top()
 
 class Ou(Expr):
     def __init__(self, gauche: Expr, droite: Expr) -> None:
@@ -148,9 +198,57 @@ class Ou(Expr):
     def repr(self) -> str:
         return "("+self.gauche.repr() + " ou " + self.droite.repr()+")"
 
-    def equiv_elim(self) -> ps.Expr:
-        return self.gauche.equiv_elim().ou(self.droite.equiv_elim())
+    def simplif(self) -> ps.Expr:
+        r = ps.Somme([])
+        gauche = self.gauche.simplif()
+        droite = self.droite.simplif()
+        if isinstance(gauche,ps.Somme):
+            r.termes.extend(gauche.termes)
+        elif isinstance(gauche,ps.Top):
+            return ps.Bottom()
+        elif isinstance(gauche,ps.Bottom):
+            return droite
+        else:
+            r.termes.append(gauche)
+        if isinstance(droite,ps.Somme):
+            r.termes.extend(droite.termes)
+        elif isinstance(droite,ps.Top):
+            return ps.Top()
+        elif isinstance(gauche,ps.Bottom):
+            return gauche
+        else:
+            r.termes.append(droite)
+        if len(r.termes) > 1:
+            return r
+        elif len(r.termes) == 1:
+            return r.termes[0]
+        else:
+            return ps.Top() 
+class Somme(Expr):
+    def __init__(self, termes: list[Expr]) -> None:
+        self.termes = termes
 
+    def repr(self) -> str:
+        return "OU(" + ",".join(t.repr() for t in self.termes) + ")"
+
+    def simplif(self) -> ps.Expr:
+        r=ps.Somme([])
+        for t in self.termes:
+            ts=t.simplif()
+            if isinstance(ts,ps.Somme):
+                r.termes.extend(ts.termes)
+            elif isinstance(ts,ps.Top):
+                return ps.Top()
+            elif isinstance(ts,ps.Bottom):
+                continue
+            else:
+                r.termes.append(ts)
+        if len(r.termes) > 1:
+            return r
+        elif len(r.termes) == 1:
+            return r.termes[0]
+        else:
+            return ps.Top() 
 
 class Non(Expr):
     def __init__(self, expr: Expr) -> None:
@@ -159,8 +257,8 @@ class Non(Expr):
     def repr(self) -> str:
         return "non(" + self.expr.repr()+")"
 
-    def equiv_elim(self) -> ps.Expr:
-        return ps.Non(self.expr.equiv_elim())
+    def simplif(self) -> ps.Expr:
+        return ps.Non(self.expr.simplif())
 
 
 class Equiv(Expr):
@@ -168,10 +266,17 @@ class Equiv(Expr):
         self.gauche = gauche
         self.droite = droite
 
-    def equiv_elim(self) -> ps.Expr:
-        g = self.gauche.equiv_elim()
-        d = self.droite.equiv_elim()
-        return (ps.Non(g).ou(d)).et(g.ou(ps.Non(d)))
+    def simplif(self) -> ps.Expr:
+        g = self.gauche.simplif()
+        d = self.droite.simplif()
+        return ps.Produit([
+            ps.Somme([
+                ps.Non(g),
+                d]),
+            ps.Somme([
+                g,
+                ps.Non(d)
+            ])])
 
     def repr(self) -> str:
         return "("+self.gauche.repr() + " <=> " + self.droite.repr()+")"
@@ -185,7 +290,10 @@ class Implique(Expr):
     def repr(self) -> str:
         return "("+self.gauche.repr() + " => " + self.droite.repr()+")"
 
-    def equiv_elim(self) -> ps.Expr:
-        g = self.gauche.equiv_elim()
-        d = self.droite.equiv_elim()
-        return ps.Non(g).ou(d)
+    def simplif(self) -> ps.Expr:
+        g = self.gauche.simplif()
+        d = self.droite.simplif()
+        return ps.Somme([
+                ps.Non(g),
+                d
+            ])
