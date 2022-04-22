@@ -62,7 +62,7 @@ class Expr:
         """
         Remplacer les équivalences et les implications dans l'expression par
         "(nonA ou B) et (A ou nonB)" et "nonA ou B" respectivement, enfin les et/ou binaires sont
-        transformés en produits/sommes .L'expression devient alors une expression simple.
+        transformés en produits/sommes . L'expression devient alors une expression simple.
         """
         pass
 

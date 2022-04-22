@@ -1,7 +1,5 @@
 from typing import Iterable
 
-from dimacs import Dimacs
-
 POSITIF=True
 NEGATIF=False
 
@@ -43,8 +41,6 @@ class Clause:
                 r+=(l.nom if l.signe else "-"+l.nom)+" "
             r+="\n"
         return r
-    def dimacs(self) -> Dimacs:
-        return Dimacs(self)
         
                     
 

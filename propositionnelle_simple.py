@@ -97,7 +97,7 @@ class Somme(Expr):
         return Produit([t.nier() for t in self.termes])
 
     def conjonc(self) -> fnc.Clause:
-        l=fnc.Bottom()
+        l=fnc.Bottom() # Clause[Terme[]]
         for t in self.termes:
             tc =t.conjonc()
             for t_terme in tc.termes:
