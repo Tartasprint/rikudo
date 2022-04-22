@@ -46,11 +46,13 @@ class Dimacs:
         contenant la correspondance variable-valeur attribuée par le SAT-Solveur.
         """
         with open("input.dimacs","w") as satinput:
+            # On écrit le fichier d'entrée pour le SAT solveur
             satinput.write(self.input)
-            os.system("minisat input.dimacs output.dimacs")
+            # On fait appel au SAT solveur
+            os.system("minisat -verb=0 input.dimacs output.dimacs")
             with open("output.dimacs","r") as satouput:
                 output = satouput.readlines()
-                if output[0] == "SAT\n":
+                if output[0] == "SAT\n":                            # Satisfaisable
                     self.solution = {}
                     for xs in output[1].split():
                         x=int(xs)
@@ -58,6 +60,6 @@ class Dimacs:
                             self.solution[self.itov[x-1]]=True
                         elif x < 0:
                             self.solution[self.itov[-x-1]]=False
-                else:
+                else:                                               # Insatisfaisable
                     self.solution = False
         return
