@@ -126,9 +126,11 @@ class Somme(Expr):
             # On transforme le terme en A une FNC
             tc =t.conjonc()
             # On distribue chacun des termes de A sur chaque terme de l
+            nouveaux_termes=[]
             for t_terme in tc.termes:
                 for l_terme in l.termes:
-                    l_terme.extend(t_terme)
+                    nouveaux_termes.append(l_terme.extend(t_terme))
+            l=fnc.Clause(nouveaux_termes)
         return l
 
 class Non(Expr):

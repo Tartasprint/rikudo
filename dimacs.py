@@ -48,18 +48,18 @@ class Dimacs:
         with open("input.dimacs","w") as satinput:
             # On écrit le fichier d'entrée pour le SAT solveur
             satinput.write(self.input)
-            # On fait appel au SAT solveur
-            os.system("minisat -verb=0 input.dimacs output.dimacs")
-            with open("output.dimacs","r") as satouput:
-                output = satouput.readlines()
-                if output[0] == "SAT\n":                            # Satisfaisable
-                    self.solution = {}
-                    for xs in output[1].split():
-                        x=int(xs)
-                        if x > 0:
-                            self.solution[self.itov[x-1]]=True
-                        elif x < 0:
-                            self.solution[self.itov[-x-1]]=False
-                else:                                               # Insatisfaisable
-                    self.solution = False
+        # On fait appel au SAT solveur
+        os.system("minisat input.dimacs output.dimacs")
+        with open("output.dimacs","r") as satouput:
+            output = satouput.readlines()
+        if output[0] == "SAT\n":                            # Satisfaisable
+            self.solution = {}
+            for xs in output[1].split():
+                x=int(xs)
+                if x > 0:
+                    self.solution[self.itov[x-1]]=True
+                elif x < 0:
+                    self.solution[self.itov[-x-1]]=False
+        else:                                               # Insatisfaisable
+            self.solution = False
         return
