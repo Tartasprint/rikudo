@@ -19,18 +19,21 @@ class Carte:
             n=fichier.readline().strip().split()
             self.H = int(n[0]) # Hauteur de la grille
             self.L = int(n[1]) # Largeur de la grille
+            N = self.L * self.H
+            # Le domaine sur lequel on va travailler
+            d = set(range(N))
             # Table qui contiendra les valeurs connues, par défaut on ne les connaît pas (None)
             self.vals = {(i,j): None for i in range(self.L * self.H) for j in range(self.L * self.H)}
             for i in range(self.H):
                 l=fichier.readline().strip().split()
                 for j in range(self.L):
                     if l[j] != "?":
-                        # On connaît cette variable, on l'écrit dans la table:
-                        self.vals[i*self.L+j,int(l[j])]=True
-        
-        N = self.L * self.H
-        # Le domaine sur lequel on va travailler
-        d = set(range(N))
+                        # On connaît cette case
+                        ncase = i*self.L+j # numéro de la case à partir de ses coordonnées
+                        for x in range(N):
+                            self.vals[ncase,int(x)]= x==l[j] # Cette case ne contient que l[j]
+                            self.vals[x,int(l[j])]= x==ncase # Seulement cette case contient l[j]
+
         def voisins(i: int, j: int):
             # Définit si les cases i et j sont voisines dans la grille rectangulaire HxL
             return (i//self.L == j//self.L and abs(i-j) == 1) or (i%self.L == j%self.L and abs(i//self.L-j//self.L) == 1)
