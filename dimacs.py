@@ -1,6 +1,7 @@
 from typing import Literal, Union
 import fnc
 import os
+from config import sat
 
 class Dimacs:
     """
@@ -21,40 +22,40 @@ class Dimacs:
     solution: Union[Literal[False],dict[str,bool]]
     input: str
     output: str
-
-    def __init__(self, clauses: fnc.Clause) -> None:
+    def __init__(self, clauses: fnc.Clause, nvars: int) -> None:
         self.clauses = clauses
         self.vtoi = {}
         self.itov = []
-        c=0
-        for t in self.clauses.termes:
-            for l in t.litteraux:
-                if self.vtoi.get(l.nom) is None:
-                    c+=1
-                    self.vtoi[l.nom]=c
-                    self.itov.append(l.nom)
-        self.input="p cnf " + str(c) + " " + str(len(self.clauses.termes)) + "\n"
-        for t in self.clauses.termes:
-            for l in t.litteraux:
-                if l.signe == fnc.NEGATIF:
-                    self.input+="-"
-                self.input+=str(self.vtoi[l.nom])+" "
-            self.input += "0\n"
-    def resoudre(self) -> None:
+        self.nvars = nvars
+    def resoudre(self, nom) -> None:
         """
         Si elles sont satisfaisables l'attribut solution est un dictionnaire
         contenant la correspondance variable-valeur attribuée par le SAT-Solveur.
         """
-        with open("input.dimacs","w") as satinput:
+        entree_fichier = nom+".input.dimacs"
+        sortie_fichier = nom+".output.dimacs"
+        with open(entree_fichier,"w") as entree_sat:
             # On écrit le fichier d'entrée pour le SAT solveur
-            satinput.write(self.input)
+            entree_sat.write("p cnf " + str(len(self.itov)) + " " + str(len(self.clauses.termes)) + "\n")
+            for t in self.clauses.termes:
+                for l in t.litteraux:
+                    if l.signe == fnc.NEGATIF:
+                        entree_sat.write("-")
+                    i=self.vtoi.get(l.nom)
+                    if i is None:
+                        self.itov.append(l.nom)
+                        i=len(self.itov)
+                        self.vtoi[l.nom]=i
+                    entree_sat.write(str(i))
+                    entree_sat.write(" ")
+                entree_sat.write("0\n")
         # On fait appel au SAT solveur
-        os.system("minisat input.dimacs output.dimacs")
-        with open("output.dimacs","r") as satouput:
-            output = satouput.readlines()
-        if output[0] == "SAT\n":                            # Satisfaisable
+        os.system(sat(entree_fichier, sortie_fichier))
+        with open(sortie_fichier,"r") as sortie:
+            sortie_sat = sortie.readlines()
+        if sortie_sat[0] == "SAT\n":                            # Satisfaisable
             self.solution = {}
-            for xs in output[1].split():
+            for xs in sortie_sat[1].split():
                 x=int(xs)
                 if x > 0:
                     self.solution[self.itov[x-1]]=True

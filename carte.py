@@ -15,6 +15,7 @@ class Carte:
     avec x pouvant être "?" si la valeur n'est pas connue, un nombre sinon.
     """
     def __init__(self,nom: str):
+        self.nom = nom.removesuffix(".carte")
         with open(nom ,"r") as fichier:
             n=fichier.readline().strip().split()
             self.H = int(n[0]) # Hauteur de la grille
@@ -31,7 +32,7 @@ class Carte:
                         # On connaît cette case
                         ncase = i*self.L+j # numéro de la case à partir de ses coordonnées
                         for x in range(N):
-                            self.vals[ncase,int(x)]= x==l[j] # Cette case ne contient que l[j]
+                            self.vals[ncase,x]= x==int(l[j]) # Cette case ne contient que l[j]
                             self.vals[x,int(l[j])]= x==ncase # Seulement cette case contient l[j]
 
         def voisins(i: int, j: int):
@@ -47,8 +48,8 @@ class Carte:
         RG.extend(self.regles_aux)
 
         # On résout
-        sat=Dimacs(RG)
-        sat.resoudre()
+        sat=Dimacs(RG,self.H*self.L)
+        sat.resoudre(self.nom)
         # On interprète le résultat:
         # tab[i][j] contiendra la valeur trouvée
         tab=[[-1 for _ in range(self.L)] for _ in range(self.H)]
@@ -64,6 +65,3 @@ class Carte:
             for j in range(self.L):
                 print('{:3d}'.format(tab[i][j]),end="")
             print()
-
-carte= Carte("test.carte")
-carte.resoudre()
