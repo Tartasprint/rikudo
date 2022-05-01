@@ -46,12 +46,17 @@ class Clause:
     def extend(self, other: "Clause") -> None:
         self.termes = self.termes.union(other.termes)
     def repr(self) -> str:
-        r=""
-        for t in self.termes:
-            for l in t.litteraux:
-                r+=(l.nom if l.signe else "-"+l.nom)+" "
-            r+="\n"
-        return r
+        if len(self.termes) == 0:
+            return "Top"
+        elif self == Bottom():
+            return "Bot"
+        else:
+            r=""
+            for t in self.termes:
+                for l in t.litteraux:
+                    r+=(l.nom if l.signe else "-"+l.nom)+" "
+                r+="\n"
+            return r
     def __repr__(self) -> str:
         r="["
         for t in self.termes:

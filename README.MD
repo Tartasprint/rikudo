@@ -1,9 +1,4 @@
-# Les fichiers
-## Essais
-`essay.py`: première esquisse
-
-`test.py`: fichier pour tester les modules de logique.
-## Logique
+##Logique
 Fichiers pour écrire de la logique de façon assez générale:
 
 * `premier_ordre.py`: Fonctions pour exprimer une formule du premier ordre et passer au propositionnel
@@ -16,20 +11,13 @@ Fichiers pour écrire de la logique de façon assez générale:
 
 * `dimacs.py`: Gère la communication avec un SAT solveur en communiquant avec des fichiers DIMACS.
 
-## Projet
+# Projet
 Fichiers qui concernent le projet:
 
-* `regles.py`: Les règles décrites dans le rendu de projet (`Theorie.pdf`).
+* `regles.py`: Les règles décrites dans le rendu de projet.
 
+* `carte.py`: décrit la lecture, construction, résolution d'une carte
 
+* `execution.py`: Le fichier à exécuter, en lui donnant un argument, la carte à résoudre.
 
-# Timings
-FNC pour:
-
-N=3: 0,08514s
-N=4: 0,08417s
-N=5: 0,15573s
-N=6: 0,15191s
-N=7: 3,28s
-N=8: 19,48s
-N=9: 98,94s
+* `config.py`: Le fichier de configuration (choix du sat-solveur, affichage)

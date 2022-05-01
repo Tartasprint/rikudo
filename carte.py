@@ -1,6 +1,7 @@
 from dimacs import Dimacs
 import regles
 import fnc
+import config
 
 class Carte:
     """
@@ -44,7 +45,9 @@ class Carte:
         # On passe en forme normale conjonctive
         RG = fnc.Top()
         for i,regle in enumerate(self.regles):
-            RG.extend(regle.fnc())
+            r=regle.fnc()
+            if config.afficher_fnc: print(f"Regle {i+1}\n",r.repr())
+            RG.extend(r)
         RG.extend(self.regles_aux)
 
         # On résout
