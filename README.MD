@@ -21,3 +21,5 @@ Fichiers qui concernent le projet:
 * `execution.py`: Le fichier à exécuter, en lui donnant un argument, la carte à résoudre.
 
 * `config.py`: Le fichier de configuration (choix du sat-solveur, affichage)
+
+* `cartes/`: Dossier contenant des cartes en exemple.
